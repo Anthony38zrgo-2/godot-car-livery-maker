@@ -39,6 +39,7 @@ Después selecciona **Abrir GLB**. Puedes navegar a cualquier carpeta del equipo
 - Vinilos editables por capas: formas simples, franjas deportivas, curvas, chevrons, rayos, cuadros y numeros 0-99.
 - Colocacion directa sobre superficies pintables; seleccion, arrastre, giro, ancho/alto independientes, bordes, duplicado, reflejo y orden de capas.
 - Guardar/reabrir libreas como JSON y atlas EXR con capas, ajustes de materiales y bloqueos.
+- Exportar un atlas completo PNG o EXR de color, con superficies protegidas y un JSON de mapeo UV2.
 
 El guardado actual conserva rutas absolutas al GLB base y al shader personalizado. Mantén juntos el JSON y el EXR; trasladar el modelo requiere actualizar su ruta. El pincel se guarda como pintura raster; los vinilos se guardan como parametros editables y se recomponen al abrir. Todavia no hay exportacion del coche pintado a GLB. Los vinilos requieren el shader predeterminado y admiten hasta 64 capas por documento.
 
@@ -59,3 +60,9 @@ La carga, materiales, máscaras, guardado y bloqueos se probaron mediante ejecuc
 ## Pruebas de vinilos
 
 Despues de importar el proyecto en Godot, ejecuta `Godot --path . --script res://tests/test_vinyl_layers.gd`. Usa geometria sintetica y no necesita los coches extraidos. Comprueba formas y numeros, superficies protegidas, transformaciones, duplicado/reflejo/orden, renderizado GPU, serializacion y reutilizacion de texturas al mover capas.
+
+## Exportar el atlas completo
+
+Selecciona **Exportar atlas** y guarda en PNG o EXR. El atlas combina el albedo de los materiales actuales, color base, rines, pintura del pincel y vinilos visibles. Tambien incorpora las piezas protegidas, conservando su apariencia base. Los acabados (rugosidad y metalicidad) no se codifican en esta imagen de color.
+
+La exportacion reorganiza las piezas para incluir las que no tienen espacio en el atlas de pintura. El archivo `*_mapeo.json` acompana a la imagen y proporciona `position` y `size` para cada nodo: `UV_atlas = UV2 * size + position`. El PNG/EXR por si solo no actualiza los UV del GLB ni es una exportacion de modelo. Este atlas aplanado no sustituye el documento editable JSON + EXR de pintura. La exportacion requiere el shader predeterminado, UV2 en todas las piezas y renderizado GPU. El EXR se genera desde la imagen del viewport, no es un atlas HDR de alta precision.

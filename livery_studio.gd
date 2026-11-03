@@ -79,7 +79,7 @@ func _build_ui() -> void:
 	box.add_child(title)
 	var buttons := HBoxContainer.new()
 	box.add_child(buttons)
-	for spec in [["Abrir GLB", "model"], ["Abrir librea", "open"], ["Guardar librea", "save"]]:
+	for spec in [["Abrir GLB", "model"], ["Abrir librea", "open"], ["Guardar librea", "save"], ["Exportar atlas", "export_atlas"]]:
 		var button := Button.new()
 		button.text = spec[0]
 		button.pressed.connect(_show_dialog.bind(spec[1]))
@@ -272,14 +272,15 @@ func _number(grid: GridContainer, label_text: String, minimum: float, maximum: f
 
 func _show_dialog(mode: String) -> void:
 	dialog.set_meta("mode", mode)
-	dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE if mode == "save" else FileDialog.FILE_MODE_OPEN_FILE
+	dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE if mode in ["save", "export_atlas"] else FileDialog.FILE_MODE_OPEN_FILE
 	match mode:
 		"model": dialog.filters = PackedStringArray(["*.glb ; Modelo GLB"])
+		"export_atlas": dialog.filters = PackedStringArray(["*.png ; Atlas PNG", "*.exr ; Atlas EXR"])
 		"shape": dialog.filters = PackedStringArray(["*.png, *.jpg, *.jpeg, *.webp ; Imagen"])
 		"shader": dialog.filters = PackedStringArray(["*.gdshader ; Shader Godot"])
 		_: dialog.filters = PackedStringArray(["*.json ; Librea"])
 	dialog.current_dir = models_dir if mode in ["model", "shape"] else liveries_dir
-	dialog.current_file = "librea.json" if mode == "save" else ""
+	dialog.current_file = "librea.json" if mode == "save" else ("atlas_completo.png" if mode == "export_atlas" else "")
 	dialog.popup_centered_ratio(0.75)
 
 func _selected(path: String) -> void:
@@ -308,6 +309,11 @@ func _selected(path: String) -> void:
 			base_finish.select(clampi(int(base_settings.get("finish", 2)), 0, 3))
 			_load_model(data.model, path.get_base_dir().path_join(data.atlas), data.get("vinyl_layers", []))
 		"save": _save_livery(path)
+		"export_atlas":
+			if path.get_extension().to_lower() not in ["png", "exr"]: path += ".png"
+			status.text = "Exportando atlas..."
+			var error: String = await preload("res://studio/atlas_exporter.gd").new().export_atlas(self,path)
+			status.text = "Atlas exportado: " + path if error.is_empty() else error
 		"shape":
 			var img := Image.load_from_file(path)
 			if img and not img.is_empty():

@@ -48,3 +48,9 @@ Cada vinilo guarda su posicion, orientacion y superficie destino. La proyeccion 
 Los bloqueos de componentes se incorporan al crear/editar el vinilo para recortar zonas protegidas sin ocultar las capas ya existentes al activar una casilla. Los vinilos solo se aplican a superficies de carroceria reconocidas; no a neumaticos, rines, luz, toma de aire ni conductos protegidos.
 
 Limite actual: 64 capas por documento, shader predeterminado y atlas de formas de 2048x2048. Las formas quedan editables; el EXR guardado contiene el pincel, no una copia aplanada de los vinilos. Las libreas antiguas sin `vinyl_layers` se abren conservando su pintura raster. Los acabados por vinilo, deshacer/rehacer y exportar la composicion a GLB siguen pendientes.
+
+## Exportar atlas completo
+
+Con el modelo abierto, pulsa **Exportar atlas** en la fila superior y selecciona PNG o EXR. Se genera la imagen de color y un archivo `*_mapeo.json`. Incluye el color base, materiales actuales de rines, pintura, vinilos visibles y piezas protegidas. El documento editable y su EXR de pincel se mantienen por separado.
+
+El atlas exportado usa un empaquetado nuevo para incluir las piezas protegidas. Para cada nodo, el JSON guarda `position` y `size`: transforma su UV2 mediante `UV_atlas = UV2 * size + position`. El GLB original no se modifica, por lo que no basta con sustituir su textura original. No se exportan mapas separados de rugosidad, metalicidad o normales; EXR se guarda desde la imagen de color del viewport y no aumenta su precision. Es necesario el shader predeterminado y que todas las piezas tengan UV2.
