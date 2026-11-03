@@ -18,3 +18,40 @@ mono_crash.*.json
 
 #vscode
 .vscode/
+
+# Local tools, generated exports and caches
+.tools/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.idea/
+*.log
+*.tmp
+*.bak
+*.blend1
+*.blend2
+build/
+dist/
+exports/
+backups/
+backup_*/
+
+# User/game assets and local inventories (keep upstream demo assets tracked)
+/extracted/
+/models/
+/helmets/
+/liveries/
+/liverys/
+/data/polyphony001/*.inventory.json
+/preparacion_limpieza/
+*.iso
+*.vol
+*.VOL
+*.blend
+*.exr
+
+# Local credentials/settings
+.env
+.env.*
+!.env.example

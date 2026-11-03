@@ -1,93 +1,55 @@
-# Godot GPU Texture Painter
+# Godot Car Livery Maker
 
-<img src="images/Icon.png" width="600" alt="Icon and demonstration in Sponza-scene">
+Editor de pintura de coches en Godot, derivado de **Godot GPU Texture Painter**, creado por **Anton Hörig (maantho)**.
 
-GPU Texture Painter is a plugin for the Godot-Engine, that can be utilized to create game mechanics like spray painting, drawing or splatoon ink.
+## Autor original y licencia
 
-It supports high precision / realistic painting, multiple meshes, and the ability to choose the brush shape and color freely. Since it runs fully on the GPU it is blazing fast.
+El sistema de pintura GPU, CameraBrush y OverlayAtlasManager procede de [maantho/gpu-texture-painter](https://github.com/maantho/gpu-texture-painter). Su autor original es **Anton Hörig**, copyright 2025. Este repositorio conserva su historial, atribución y licencia [MIT](LICENSE), también incluida en [el addon](addons/gpu_texture_painter/LICENSE). La documentación original se conserva en [README-UPSTREAM.md](README-UPSTREAM.md).
 
-Godot 4.4+ supported.
+Las adaptaciones de este repositorio añaden el estudio de libreas, carga externa de modelos, materiales base, controles de rines y protección de superficies. Las imágenes de demostración del addon pertenecen al proyecto original.
 
-<img src="images/preview.gif" width="600" alt="Demo video">
+## Requisitos y arranque
 
-Feel free to use this addon in any project or use it as inspiration to create your own texture painter running on the GPU :)
+- Godot 4.7 o superior; probado con 4.7.1 en Windows y una NVIDIA RTX 3050.
+- Renderer Forward+ y GPU compatible con compute shaders; no utilizar Compatibility.
+- PowerShell para el lanzador opcional. Python y Blender solo son necesarios para preparar modelos, no para ejecutar el editor.
 
-For bug reports, feature requests and questions please open an issue.
+Abre `project.godot` en Godot y ejecuta el proyecto, o utiliza:
 
+```powershell
+.\iniciar.ps1 -GodotPath 'C:\ruta\Godot.exe'
+```
 
+También detecta `GODOT_BIN` o Godot en PATH. Para abrir el editor:
 
-## Features
+```powershell
+.\iniciar.ps1 -Editor
+```
 
-- Brush / spray viewpoint rendered by camera -> resembles **individual particles**
-- Achieves realistic and fine painting across multiple meshes
-- No PhysicsServer or CollisionShapes needed. (Relies fully on 3D rendering techniques)
-- Works at runtime & in editor
-- Up to 8 overlay texture atlases per scene
-- Arbitrary amount of meshes per atlas
-- Arbitrary brush shapes provided by an image
-- Resolution and other performance settings
+Después selecciona **Abrir GLB**. Puedes navegar a cualquier carpeta del equipo. La carpeta sugerida es `../extracted/cars/polyphony001/models` respecto al proyecto; el guardado propone `../extracted/cars/polyphony001/liveries`.
 
-## Usage
+## Funciones disponibles
 
-Install via the [Godot Asset Library](https://godotengine.org/asset-library/asset/4486).
-The addon adds two nodes: The **OverlayAtlasManager** for the management of materials and textures and the **CameraBrush** for painting onto the textures.
+- Cargar GLB externos, orbitar con botón derecho y acercar con la rueda.
+- Pintar con botón izquierdo; elegir color, forma de pincel, proyección, tamaño/FOV, resolución, velocidad y sangrado.
+- Elegir color base de carrocería y acabado mate, satinado, brillante o metalizado.
+- Configurar tres zonas del rin: centro, anillo intermedio y anillo exterior, con color y acabado independientes.
+- Excluir superficies identificadas con prefijo `NO_PINTAR_`.
+- Bloquear temporalmente alerón delantero, trasero y bargeboards sin borrar pintura existente.
+- Guardar/reabrir libreas como JSON y atlas EXR con ajustes de materiales y bloqueos.
 
-For an example configuration open the [demo scene](addons/gpu_texture_painter/demo/demo_scene.tscn)
+El guardado actual conserva rutas absolutas al GLB base y al shader personalizado. Mantén juntos el JSON y el EXR; trasladar el modelo requiere actualizar su ruta. La copia de pintura es raster: aún no hay vinilos vectoriales editables ni exportación del coche pintado a GLB.
 
-### Overlay Atlas Creation
+## Compatibilidad de modelos
 
-![OverlayAtlasManager](images/OverlayAtlasManagerEditor.png)
+La pintura necesita UV2 sin solapamientos. Los controles de carrocería y rines reconocen nombres de nodos y materiales de las cuatro variantes Polyphony001 preparadas, no cualquier GLB automáticamente. Los bloqueos de alerones integrados usan regiones espaciales específicas de esos modelos y el shader predeterminado; los shaders personalizados necesitan implementar los mismos parámetros. Mientras hay bloqueos se suprime el sangrado para evitar invadir regiones vecinas.
 
-- Add **OverlayAtlasManager** Node as sibling or parent to MeshInstance3D nodes.
-    - Use hierarchy for compartmentalization of atlases.
-    - All meshes need to have the UV2 unwrapped as described [here](https://docs.godotengine.org/en/stable/tutorials/3d/global_illumination/using_lightmap_gi.html#setting-up).
-- Set the wanted texture size.
-- Set the shader file used for the overlay material. See [Appearance of the Overlay](#overlay-atlas-creation).
-- Press **Apply** to generate the atlas packing and apply the overlay shader material to all materials.
-- Alternatively, call the **apply()** method in a script.
-- Alternatively, select **Apply on ready**. Useful for MeshInstance3Ds inside PackedScenes.
-- You can save the current atlas texture to file by pressing **Save atlas to file**. It selects an available path or overrides the file at the given path.
-- The texture at **Atlas Texture Path** is loaded at ready and apply.
-- When an **OverlayAtlasManager** is selected, controls for in editor drawing show in the spatial editor menu at the top.
+Los coches, texturas extraídas, ISOs y libreas del usuario **no se distribuyen** con este código. Debes proporcionar tus propios modelos y sus permisos de uso. La licencia MIT del código no concede derechos sobre recursos de videojuegos externos.
 
-### Camera Brush
+## Documentación y herramientas
 
-![CameraBrush](images/CameraBrushEditor.png)
+- [Uso detallado del estudio](LEEME-LIBREAS.md).
+- [Plan del editor por capas](PLAN-EDITOR-VINILOS.md): propuesta; sus funciones pendientes no forman parte de la versión actual.
+- Scripts Python: preparación, separación de piloto, limpieza y clasificación de las variantes locales. Revisa sus supuestos y conserva backups antes de usarlos con otros modelos.
 
-- Add a **CameraBrush** Node to the scene. Make it a child of the camera for example, to make it moved by the player.
-- The **Projection** mode controls the type of the brush:
-    - Perspective: Paint spreads, e.g. spray cans
-    - Orthogonal: Brush size stays constant, e.g. pencils
-- **FOV/Size**: The size of the brush
-- **Max Distance**: The range of the brush. (Affects performance)
-- **Start Distance Fade**: At which distance the brush should start to fade to full transparency.
-- **Bleed**: How many texels should be drawn in the atlas around the texels rendered by the CameraBrush. Increase to reduce artifacts. (Affects performance)
-- **Brush Shape**: Image of the brush shape. Must be imported as Image. The alpha channel dictates the opacity of the paint effect.
-- **Resolution**: Resolution of the CameraBrush render target. Increase or decrease until holes in the painting disappear. (Affects performance)
-- **Color**: Color of the brush. Opacity can be set.
-- **Draw Speed**: The rate at which the paint is applied.
-- **Drawing**: If enabled the brush renders and paint is applied. Can also be set from script. 
-
-### Appearance of the overlay
-
-- Duplicate the overlay_template.gdshader file.
-- Insert your custom shader code at the placeholder.
-
-
-## How it works
-
-![CameraBrushUV](images/CameraBrushUV.png)
-
-![CameraBrushDepth](images/CameraBrushDepth.png)
-
-- All meshes are packed into an overlay texture atlas utilizing the unwrapped UV2 coordinates.
-- **Each CameraBrush renders to an offline framebuffer/subviewport.**
-    - Each mesh renders the fragment's **UV2 atlas coordinates as its color** into the texture. UVs are remapped to (-0.5,0.5) for greater IEEE 754 FP16 precision (16 bit is a Godot limitation) (First Image)
-    - Blue channel of the render target is used to store the depth and atlas index. (Second Image, how it is in the addon)
-        - Godot converts float to half precision during the render -> only 14 bits are unchanged during conversion
-        - Depth is stored in bit 14-24 -> truncated to 11 bits
-        - Index is stored in bit 32 & 25-26 -> 3 bits -> up to 8 atlases simultaneously.
-- This render texture is fed to a **compute shader**.
-    - It iterates over every texel (imageLoad), **retrieves the UV coordinates** and atlas index, and **writes into the indexed overlay atlas texture at the given coordinate** (imageStore).
-    - Compute colors according to shape image, color, and distance.
-    - If bleed is used, neighboring texels are filled as well
+La carga, materiales, máscaras, guardado y bloqueos se probaron mediante ejecución GPU y comprobaciones automatizadas. Es recomendable revisar visualmente cada variante y sus límites de pintura.

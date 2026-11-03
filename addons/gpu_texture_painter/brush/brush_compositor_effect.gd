@@ -221,8 +221,8 @@ func _render_callback(p_effect_callback_type: EffectCallbackType, p_render_data:
 			camera_brush.last_delta * camera_brush.draw_speed,
 			camera_brush.max_distance,
 			camera_brush.start_distance_fade,
-			float(camera_brush.min_bleed),
-			float(camera_brush.max_bleed),
+			0.0 if camera_brush.suppress_bleed else float(camera_brush.min_bleed),
+			0.0 if camera_brush.suppress_bleed else float(camera_brush.max_bleed),
 			float(0),
 			float(0),
 			float(0)

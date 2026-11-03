@@ -103,7 +103,7 @@ func _create_texture() -> void:
 
 	# try to load texture from file
 	if !atlas_texture_path.is_empty() and FileAccess.file_exists(atlas_texture_path):
-		var loaded = load(atlas_texture_path)
+		var loaded = Image.load_from_file(atlas_texture_path) if atlas_texture_path.is_absolute_path() else load(atlas_texture_path)
 		if loaded:
 			if loaded is Texture2D:
 				image = loaded.get_image()
@@ -144,6 +144,10 @@ func _construct_atlas_and_apply_materials() -> void:
 	var rects: Array[Vector2] = []
 	for i in range(mesh_instances.size() - 1, -1, -1):
 		var mesh_instance = mesh_instances[i]
+		if String(mesh_instance.name).begins_with("NO_PINTAR_"):
+			mesh_instance.material_overlay = null
+			mesh_instances.erase(mesh_instance)
+			continue
 		if mesh_instance.mesh == null:
 			mesh_instances.erase(mesh_instance)
 			push_warning("MeshInstance3D '{0}' has no mesh assigned, skipping overlay material application.".format([mesh_instance.name]))

@@ -1,12 +1,18 @@
 shader_type spatial;
+render_mode cull_disabled;
 
 uniform sampler2D overlay_texture;
 uniform vec2 position_in_atlas;
 uniform vec2 size_in_atlas;
 uniform uint atlas_index;
+uniform bool lock_front_wing = false;
+uniform bool lock_rear_wing = false;
+uniform bool lock_bargeboards = false;
+uniform bool is_bargeboard = false;
+varying vec3 model_world_position;
 
 void vertex() {
-	// Called for every vertex the material is visible on.
+	model_world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
 void fragment() {
@@ -38,7 +44,10 @@ void fragment() {
 		// display as EMISSION to avoid shading
 		ALBEDO = vec3(0.0);
 		SPECULAR = 0.0;
-		EMISSION = vec3(atlas_uv - vec2(0.5), b);
+		bool protected_part = (lock_bargeboards && is_bargeboard)
+            || (lock_front_wing && model_world_position.z < -1.73 && model_world_position.y < 0.32)
+            || (lock_rear_wing && model_world_position.z > 1.55 && model_world_position.y > 0.29);
+        EMISSION = protected_part ? vec3(-2.0, -2.0, 0.0) : vec3(atlas_uv - vec2(0.5), b);
     }
 	else{
 		vec4 atlas_color = texture(overlay_texture, atlas_uv);

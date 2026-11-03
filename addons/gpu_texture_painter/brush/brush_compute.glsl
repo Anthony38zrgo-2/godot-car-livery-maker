@@ -35,12 +35,14 @@ void main() {
     // gl_GlobalInvocationID.x uniquely identifies this invocation across all work groups
     ivec2 framebuffer_coords = ivec2(gl_GlobalInvocationID.xy);
 
-    if ((framebuffer_coords.x > imageSize(framebuffer).x) || (framebuffer_coords.y > imageSize(framebuffer).y)) {
+    if ((framebuffer_coords.x >= imageSize(framebuffer).x) || (framebuffer_coords.y >= imageSize(framebuffer).y)) {
 		return;
 	}
 
     vec4 framebuffer_color = imageLoad(framebuffer, framebuffer_coords);
     framebuffer_color.xy = framebuffer_color.xy + vec2(0.5f);
+    // Locked geometry still occludes the brush, but emits no writable UV.
+    if (any(lessThan(framebuffer_color.xy, vec2(0.0))) || any(greaterThanEqual(framebuffer_color.xy, vec2(1.0)))) return;
     
     uint b_bits = floatBitsToUint(framebuffer_color.b);
     // get distance in 13-23 -> 11 bits truncated
@@ -70,6 +72,7 @@ void main() {
     for (int y = -bleed; y <= bleed; y++) { \
         for (int x = -bleed; x <= bleed; x++) { \
             ivec2 bleed_coords = overlay_texture_coords + ivec2(x, y); \
+            if (any(lessThan(bleed_coords, ivec2(0))) || any(greaterThanEqual(bleed_coords, imageSize(tex)))) continue; \
             vec4 existing_color = imageLoad(tex, bleed_coords); \
             float out_alpha = brush_color.a + existing_color.a * (1.0f - brush_color.a); \
             vec3 out_color = (out_alpha > 0.0f) ? \

@@ -93,6 +93,8 @@ extends Node3D
 			viewport.render_target_update_mode = SubViewport.UpdateMode.UPDATE_ALWAYS if drawing else SubViewport.UpdateMode.UPDATE_DISABLED
 
 var last_delta: float = 0.0
+# Prevent neighbouring atlas writes from crossing a locked component boundary.
+var suppress_bleed: bool = false
 
 var viewport: SubViewport
 var camera: Camera3D
