@@ -31,3 +31,20 @@ Las casillas **Bloquear aleron delantero**, **Bloquear aleron trasero** y **Bloq
 Los bargeboards se reconocen por sus nodos Bargeboard_F094H. Los alerones integrados en la carroceria se filtran por las regiones espaciales de los cuatro Polyphony001 preparados (incluye un pequeño margen en la raiz trasera); estos limites no constituyen perfiles universales para otros coches. La capa visible se conserva incluso al bloquear: solo se invalida la escritura del pincel. Mientras haya un bloqueo, el sangrado del pincel se suprime internamente para impedir que invada texeles vecinos protegidos; los valores configurados vuelven a utilizarse al desbloquear todo. Un shader personalizado necesita implementar los mismos parametros de bloqueo para soportarlos.
 
 Prueba GPU: se comprobaron muestras UV de los cuatro modelos con las tres casillas activas y se verifico que vuelven a recibir pintura al desactivarlas, junto con guardado y reapertura de los estados. Queda recomendada la revision visual de bordes al pintar desde ambos laterales.
+
+## Vinilos por capas
+
+1. Abre un coche `*_sin_casco_partes.glb` y pulsa **Vinilos por capas...**. La ventana se puede mover/redimensionar; mientras esta abierta, los ajustes generales se ocultan para dejar espacio al coche.
+2. Elige la forma en la biblioteca y pulsa **Anadir / colocar**. Haz clic sobre una superficie pintable del coche. Un clic sobre una zona protegida o un componente bloqueado rechaza la colocacion.
+3. Selecciona una capa en la lista o haz clic sobre ella en el coche. Con **Modo vinilos** activado, el boton izquierdo selecciona/arrastra vinilos en vez de pintar. Derecho orbita y la rueda acerca/aleja. Las vistas lateral y superior ayudan a alinear.
+4. Modifica ancho y alto de manera independiente, giro, desplazamiento horizontal/vertical, color HEX/opacidad, borde y color del borde. Horizontal/Vertical fijan 0/90 grados. **Curvatura** controla las dos formas curvas deportivas; **Numero** controla los digitos 0-99. Para renombrar una capa, escribe su nombre y pulsa Enter.
+5. **Duplicar** crea una copia editable. **Reflejar** crea una copia al otro lado del eje central del coche conservando la lectura de los numeros. **Subir** lleva la capa por delante y **Bajar** por detras. La lista va del fondo a la capa superior.
+6. **Visible** oculta/muestra y **Bloquear capa** impide editarla. Cerrar la ventana vuelve al pincel y los ajustes generales. **Guardar librea** conserva la pila completa en el JSON junto con el EXR de la pintura manual.
+
+La biblioteca incluye rectangulo, rectangulo redondeado, circulo, triangulo, trapecio, franja afinada, franja doble/triple, chevron, rayo, curva deportiva, barrido deportivo, cuadros y numeros geometricos. Las formas se generan por codigo y no incluyen patrocinadores ni fuentes externas.
+
+Cada vinilo guarda su posicion, orientacion y superficie destino. La proyeccion sigue la geometria existente sin añadir caras coplanares al coche. La profundidad controla hasta donde alcanza la proyeccion alrededor del punto de anclaje: usa valores pequeños para evitar alcanzar superficies cercanas no deseadas. Curvas fuertes pueden requerir varias capas o recolocar el vinilo. Arrastrar adapta su marco a la nueva normal de la superficie.
+
+Los bloqueos de componentes se incorporan al crear/editar el vinilo para recortar zonas protegidas sin ocultar las capas ya existentes al activar una casilla. Los vinilos solo se aplican a superficies de carroceria reconocidas; no a neumaticos, rines, luz, toma de aire ni conductos protegidos.
+
+Limite actual: 64 capas por documento, shader predeterminado y atlas de formas de 2048x2048. Las formas quedan editables; el EXR guardado contiene el pincel, no una copia aplanada de los vinilos. Las libreas antiguas sin `vinyl_layers` se abren conservando su pintura raster. Los acabados por vinilo, deshacer/rehacer y exportar la composicion a GLB siguen pendientes.

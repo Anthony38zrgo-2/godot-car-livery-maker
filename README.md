@@ -36,9 +36,11 @@ Después selecciona **Abrir GLB**. Puedes navegar a cualquier carpeta del equipo
 - Configurar tres zonas del rin: centro, anillo intermedio y anillo exterior, con color y acabado independientes.
 - Excluir superficies identificadas con prefijo `NO_PINTAR_`.
 - Bloquear temporalmente alerón delantero, trasero y bargeboards sin borrar pintura existente.
-- Guardar/reabrir libreas como JSON y atlas EXR con ajustes de materiales y bloqueos.
+- Vinilos editables por capas: formas simples, franjas deportivas, curvas, chevrons, rayos, cuadros y numeros 0-99.
+- Colocacion directa sobre superficies pintables; seleccion, arrastre, giro, ancho/alto independientes, bordes, duplicado, reflejo y orden de capas.
+- Guardar/reabrir libreas como JSON y atlas EXR con capas, ajustes de materiales y bloqueos.
 
-El guardado actual conserva rutas absolutas al GLB base y al shader personalizado. Mantén juntos el JSON y el EXR; trasladar el modelo requiere actualizar su ruta. La copia de pintura es raster: aún no hay vinilos vectoriales editables ni exportación del coche pintado a GLB.
+El guardado actual conserva rutas absolutas al GLB base y al shader personalizado. Mantén juntos el JSON y el EXR; trasladar el modelo requiere actualizar su ruta. El pincel se guarda como pintura raster; los vinilos se guardan como parametros editables y se recomponen al abrir. Todavia no hay exportacion del coche pintado a GLB. Los vinilos requieren el shader predeterminado y admiten hasta 64 capas por documento.
 
 ## Compatibilidad de modelos
 
@@ -53,3 +55,7 @@ Los coches, texturas extraídas, ISOs y libreas del usuario **no se distribuyen*
 - Scripts Python: preparación, separación de piloto, limpieza y clasificación de las variantes locales. Revisa sus supuestos y conserva backups antes de usarlos con otros modelos.
 
 La carga, materiales, máscaras, guardado y bloqueos se probaron mediante ejecución GPU y comprobaciones automatizadas. Es recomendable revisar visualmente cada variante y sus límites de pintura.
+
+## Pruebas de vinilos
+
+Despues de importar el proyecto en Godot, ejecuta `Godot --path . --script res://tests/test_vinyl_layers.gd`. Usa geometria sintetica y no necesita los coches extraidos. Comprueba formas y numeros, superficies protegidas, transformaciones, duplicado/reflejo/orden, renderizado GPU, serializacion y reutilizacion de texturas al mover capas.

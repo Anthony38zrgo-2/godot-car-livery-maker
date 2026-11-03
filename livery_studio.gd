@@ -32,6 +32,9 @@ var base_finish: OptionButton
 var rim_materials = preload("res://rim_materials.gd").new()
 var rim_controls: Dictionary = {}
 var component_locks: Dictionary = {}
+var vinyl_editor: VBoxContainer
+var vinyl_window: Window
+var settings_panel: PanelContainer
 
 func _ready() -> void:
 	var base := ProjectSettings.globalize_path("res://" + BASE).simplify_path()
@@ -68,6 +71,7 @@ func _build_ui() -> void:
 	add_child(layer)
 	var panel := PanelContainer.new()
 	layer.add_child(panel)
+	settings_panel = panel
 	var box := VBoxContainer.new()
 	panel.add_child(box)
 	var title := Label.new()
@@ -80,6 +84,35 @@ func _build_ui() -> void:
 		button.text = spec[0]
 		button.pressed.connect(_show_dialog.bind(spec[1]))
 		buttons.add_child(button)
+	var vinyl_button := Button.new()
+	vinyl_button.text = "Vinilos por capas..."
+	vinyl_button.pressed.connect(func():
+		vinyl_window.popup()
+		vinyl_editor.tools.button_pressed = true
+		settings_panel.hide()
+		_update_camera()
+	)
+	box.add_child(vinyl_button)
+	vinyl_window = Window.new()
+	vinyl_window.title = "Vinilos - formas y numeros"
+	vinyl_window.size = Vector2i(560, 690)
+	vinyl_window.position = Vector2i(20,40)
+	vinyl_window.min_size = Vector2i(540,400)
+	vinyl_window.close_requested.connect(func():
+		vinyl_window.hide()
+		vinyl_editor.tools.button_pressed = false
+		settings_panel.show()
+		_update_camera()
+	)
+	layer.add_child(vinyl_window)
+	vinyl_window.hide()
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vinyl_window.add_child(scroll)
+	vinyl_editor = preload("res://studio/vinyl_editor.gd").new()
+	scroll.add_child(vinyl_editor)
+	vinyl_editor.setup(self)
+	vinyl_editor.tools.button_pressed = false
 	var base_controls := HBoxContainer.new()
 	box.add_child(base_controls)
 	base_enabled = CheckButton.new()
@@ -174,7 +207,7 @@ func _build_ui() -> void:
 	apply_confirmation = ConfirmationDialog.new()
 	apply_confirmation.dialog_text = "Se recreara el atlas y se perdera la pintura actual no guardada. Guarda la librea primero si deseas conservarla."
 	apply_confirmation.confirmed.connect(func():
-		if not model_path.is_empty(): _load_model(model_path, "")
+		if not model_path.is_empty(): _load_model(model_path, "", vinyl_editor.layers)
 	)
 	layer.add_child(apply_confirmation)
 
@@ -258,6 +291,9 @@ func _selected(path: String) -> void:
 			if not data is Dictionary or not data.has("model") or not data.has("atlas"):
 				status.text = "Archivo de librea invalido"
 				return
+			if not data.get("vinyl_layers", []) is Array:
+				status.text = "Lista de capas invalida"
+				return
 			var saved_shader: String = data.get("shader", "")
 			if not saved_shader.is_empty() and not FileAccess.file_exists(saved_shader):
 				status.text = "No se encontro el shader de la librea: " + saved_shader
@@ -270,7 +306,7 @@ func _selected(path: String) -> void:
 			base_enabled.set_pressed_no_signal(base_settings.get("enabled", false))
 			base_color.color = Color.from_string(base_settings.get("color", "ffffffff"), Color.WHITE)
 			base_finish.select(clampi(int(base_settings.get("finish", 2)), 0, 3))
-			_load_model(data.model, path.get_base_dir().path_join(data.atlas))
+			_load_model(data.model, path.get_base_dir().path_join(data.atlas), data.get("vinyl_layers", []))
 		"save": _save_livery(path)
 		"shape":
 			var img := Image.load_from_file(path)
@@ -285,7 +321,16 @@ func _selected(path: String) -> void:
 			shader_path = path
 			status.text = "Shader seleccionado para el proximo modelo: " + path.get_file()
 
-func _load_model(path: String, atlas: String) -> void:
+func _load_model(path: String, atlas: String, vinyl_layers: Array = []) -> void:
+	var layer_error: String = vinyl_editor.validate_layers(vinyl_layers)
+	if not layer_error.is_empty():
+		status.text = layer_error
+		return
+	if not vinyl_layers.is_empty() and not shader_path.is_empty():
+		var code := FileAccess.get_file_as_string(shader_path)
+		if not code.contains("uniform vec4 vinyl_origins[64]"):
+			status.text = "La librea contiene vinilos: utiliza el shader predeterminado o uno compatible"
+			return
 	var doc := GLTFDocument.new()
 	var state := GLTFState.new()
 	if doc.append_from_file(path, state) != OK:
@@ -329,6 +374,7 @@ func _load_model(path: String, atlas: String) -> void:
 	applied_shader_path = shader_path
 	_apply_component_locks()
 	brush.get_atlas_textures()
+	vinyl_editor.bind_model(vinyl_layers)
 	status.text = "Modelo: " + path.get_file() + " | Izquierdo: pintar | Derecho: orbitar | Rueda: zoom"
 
 func _set_hints(node: Node) -> void:
@@ -353,8 +399,11 @@ func _save_livery(path: String) -> void:
 	if not f:
 		status.text = "No se pudo guardar la librea"
 		return
-	f.store_string(JSON.stringify({"model": model_path, "atlas": atlas_path.get_file(), "shader": applied_shader_path, "component_locks": _lock_settings(), "rims": _rim_settings(), "body_base": {"enabled": base_enabled.button_pressed, "color": base_color.color.to_html(true), "finish": base_finish.selected}}, "  "))
+	f.store_string(JSON.stringify({"version": 2, "vinyl_layers": vinyl_editor.layers, "model": model_path, "atlas": atlas_path.get_file(), "shader": applied_shader_path, "component_locks": _lock_settings(), "rims": _rim_settings(), "body_base": {"enabled": base_enabled.button_pressed, "color": base_color.color.to_html(true), "finish": base_finish.selected}}, "  "))
 	status.text = "Guardada: " + path
+
+func supports_vinyls() -> bool:
+	return is_instance_valid(manager) and manager.overlay_shader != null and manager.overlay_shader.code.contains("uniform vec4 vinyl_origins[64]")
 
 func _lock_settings() -> Dictionary:
 	var settings := {}
@@ -378,13 +427,21 @@ func _apply_base() -> void:
 func _update_camera() -> void:
 	camera.position = target + Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch)) * distance
 	camera.look_at(target)
+	camera.h_offset = -(camera.size if camera.projection == Camera3D.PROJECTION_ORTHOGONAL else distance) * 0.3 if is_instance_valid(vinyl_window) and vinyl_window.visible else 0.0
 
 func _unhandled_input(event: InputEvent) -> void:
+	if vinyl_editor.handle(event):
+		painting = false
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			painting = event.pressed
 		if event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
-			distance = clampf(distance * (0.9 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.1), 0.4, 30.0)
+			var zoom := 0.9 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.1
+			if camera.projection == Camera3D.PROJECTION_ORTHOGONAL:
+				camera.size = clampf(camera.size * zoom, 0.4, 20.0)
+			else:
+				distance = clampf(distance * zoom, 0.4, 30.0)
 			_update_camera()
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 		yaw -= event.relative.x * 0.01
@@ -394,7 +451,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(_delta: float) -> void:
 	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		painting = false
-	brush.drawing = painting and manager != null and brush_enabled.button_pressed
+	brush.drawing = painting and manager != null and brush_enabled.button_pressed and not vinyl_editor.tools.button_pressed
 	if brush.drawing:
 		var mouse := get_viewport().get_mouse_position()
 		var dir := camera.project_ray_normal(mouse)

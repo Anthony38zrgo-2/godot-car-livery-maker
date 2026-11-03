@@ -10,6 +10,12 @@ uniform bool lock_rear_wing = false;
 uniform bool lock_bargeboards = false;
 uniform bool is_bargeboard = false;
 varying vec3 model_world_position;
+uniform sampler2D vinyl_atlas : source_color, filter_linear;
+uniform int vinyl_count = 0;
+uniform vec4 vinyl_origins[64];
+uniform vec4 vinyl_rights[64];
+uniform vec4 vinyl_ups[64];
+uniform vec4 vinyl_protections[64];
 
 void vertex() {
 	model_world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -51,8 +57,28 @@ void fragment() {
     }
 	else{
 		vec4 atlas_color = texture(overlay_texture, atlas_uv);
-		ALBEDO = atlas_color.rgb;
-		ALPHA = atlas_color.a;
+		for (int i = 0; i < vinyl_count; i++) {
+            vec4 origin = vinyl_origins[i];
+            if (origin.w < 0.0) continue;
+            vec3 protection = vinyl_protections[i].xyz;
+            if ((protection.x > 0.5 && model_world_position.z < -1.73 && model_world_position.y < 0.32)
+                || (protection.y > 0.5 && model_world_position.z > 1.55 && model_world_position.y > 0.29)
+                || (protection.z > 0.5 && is_bargeboard)) continue;
+            vec3 right = vinyl_rights[i].xyz;
+            vec3 up = vinyl_ups[i].xyz;
+            vec3 delta = model_world_position - origin.xyz;
+            if (abs(dot(delta, cross(right, up))) > origin.w) continue;
+            vec2 uv = vec2(dot(delta, right) / vinyl_rights[i].w + 0.5,
+                           0.5 - dot(delta, up) / vinyl_ups[i].w);
+            if (any(lessThan(uv, vec2(0.0))) || any(greaterThanEqual(uv, vec2(1.0)))) continue;
+            vec2 cell = vec2(float(i % 8), float(i / 8));
+            vec4 color = texture(vinyl_atlas, (cell + uv) / 8.0);
+            float alpha = color.a + atlas_color.a * (1.0 - color.a);
+            atlas_color.rgb = alpha > 0.0 ? (color.rgb * color.a + atlas_color.rgb * atlas_color.a * (1.0 - color.a)) / alpha : vec3(0.0);
+            atlas_color.a = alpha;
+        }
+        ALBEDO = atlas_color.rgb;
+        ALPHA = atlas_color.a;
 	}
 }
 

@@ -1,6 +1,8 @@
 # Plan: editor de libreas por capas para Polyphony001
 
-Estado: propuesta de implementacion. No implementa la feature.
+Estado actualizado: la etapa de vinilos por capas esta implementada con biblioteca de 14 formas/tipos, numeros 0-99, proyeccion planar sobre superficies, seleccion/arrastre, escala, giro, bordes, duplicado, reflejo y orden. Se guardan los parametros de las capas en el documento v2 junto al atlas raster existente. Hay un limite de 64 capas y se requiere el shader predeterminado. Tambien estan implementados los colores/acabados base y de rines y los bloqueos de superficies.
+
+Siguen pendientes del plan completo: acabados/carbono por capa, historial deshacer/rehacer, envoltura avanzada de curvas, migracion a paquetes con rutas relativas y exportacion GLB con mapas horneados. Los apartados siguientes conservan la especificacion objetivo y la situacion observada al elaborar el plan.
 
 ## Objetivo y alcance
 
